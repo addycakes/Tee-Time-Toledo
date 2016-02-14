@@ -1,3 +1,18 @@
+package com.adamwilson.golf.DataModel;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteDatabase;
+import android.content.ContentValues;
+import android.content.Context;
+
+import com.adamwilson.golf.HoleActivity;
+
 /**
  * Created by adam on 6/25/15.
  */
@@ -78,13 +93,7 @@ public class GolfDB extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         // TODO Auto-generated method stub
-       try {
-            Cursor res = db.rawQuery("SELECT * FROM " + PROFILE_TABLE_NAME, null);
-        } catch (android.database.sqlite.SQLiteException exception) {
-            db.execSQL(
-                    "CREATE TABLE " + PROFILE_TABLE_NAME + " (id INTEGER PRIMARY KEY, name TEXT, pic TEXT, handicap TEXT);"
-            );
-        }
+        System.out.println("table created");
     }
 
     @Override
@@ -98,6 +107,14 @@ public class GolfDB extends SQLiteOpenHelper {
 
     public int numberOfProfiles() {
         SQLiteDatabase db = this.getReadableDatabase();
+        try {
+            Cursor res = db.rawQuery("SELECT * FROM " + PROFILE_TABLE_NAME, null);
+        } catch (android.database.sqlite.SQLiteException exception) {
+            db.execSQL(
+                    "CREATE TABLE " + PROFILE_TABLE_NAME + " (id INTEGER PRIMARY KEY, name TEXT, pic TEXT, handicap TEXT);"
+            );
+        }
+
         int numRows = (int) DatabaseUtils.queryNumEntries(db, PROFILE_TABLE_NAME);
         return numRows;
     }
@@ -116,14 +133,15 @@ public class GolfDB extends SQLiteOpenHelper {
         contentValues.put("greensHit", greensHit);
         contentValues.put("fairwayHit", fairwayHit);
 
+        System.out.println(roundTableName);
         db.insert(roundTableName, null, contentValues);
+
         return true;
     }
 
     public boolean updateHole(Integer id, String course, String golfer, String hole, String par, String handicap, String score, String putts,
                               String greensHit, String fairwayHit) {
         SQLiteDatabase db = this.getWritableDatabase();
-
         ContentValues contentValues = new ContentValues();
         contentValues.put("courseName", course);
         contentValues.put("golferName", golfer);
@@ -134,8 +152,8 @@ public class GolfDB extends SQLiteOpenHelper {
         contentValues.put("putts", putts);
         contentValues.put("greensHit", greensHit);
         contentValues.put("fairwayHit", fairwayHit);
-
         db.update(roundTableName, contentValues, "id = ?", new String[]{Integer.toString(id)});
+
         return true;
     }
 
@@ -284,13 +302,13 @@ public class GolfDB extends SQLiteOpenHelper {
         return true;
     }
 
-    public boolean updateProfile(Integer id, String name, String pic, String handicap) {
+    public boolean updateProfile(String[] profile) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-        contentValues.put(PROFILE_COLUMN_NAME, name);
-        contentValues.put(PROFILE_COLUMN_PIC, pic);
-        contentValues.put(PROFILE_COLUMN_HANDICAP, handicap);
-        db.update(PROFILE_TABLE_NAME, contentValues, "id = ?", new String[]{Integer.toString(id)});
+        contentValues.put(PROFILE_COLUMN_NAME, profile[0]);
+        contentValues.put(PROFILE_COLUMN_PIC, profile[1]);
+        contentValues.put(PROFILE_COLUMN_HANDICAP, profile[2]);
+        db.update(PROFILE_TABLE_NAME, contentValues, "name = ?", new String[]{profile[0]});
         return true;
     }
 
@@ -306,6 +324,14 @@ public class GolfDB extends SQLiteOpenHelper {
 
         SQLiteDatabase db = this.getReadableDatabase();
 
+        try {
+            Cursor res = db.rawQuery("SELECT * FROM " + PROFILE_TABLE_NAME, null);
+        } catch (android.database.sqlite.SQLiteException exception) {
+            db.execSQL(
+                    "CREATE TABLE " + PROFILE_TABLE_NAME + " (id INTEGER PRIMARY KEY, name TEXT, pic TEXT, handicap TEXT);"
+            );
+        }
+
         Cursor res = db.rawQuery("SELECT * FROM " + PROFILE_TABLE_NAME, null);
         res.moveToFirst();
 
@@ -318,6 +344,8 @@ public class GolfDB extends SQLiteOpenHelper {
 
             array_list.add(entry);
             res.moveToNext();
+
+            //System.out.println(entry[0]);
         }
 
         res.close();
@@ -329,12 +357,10 @@ public class GolfDB extends SQLiteOpenHelper {
     public boolean insertStroke(String hole, String club, String latitude, String longitude) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-
         contentValues.put(STROKES_COLUMN_HOLE, hole);
         contentValues.put(STROKES_COLUMN_CLUB, club);
         contentValues.put(STROKES_COLUMN_LATITUDE, latitude);
         contentValues.put(STROKES_COLUMN_LONGITUDE, longitude);
-
         db.insert(strokesTableName, null, contentValues);
         return true;
     }
@@ -367,3 +393,58 @@ public class GolfDB extends SQLiteOpenHelper {
         return array_list;
     }
 }
+
+/*
+    public void insertTestRound(String golfer){
+        System.out.println("test round");
+
+        Random random = new Random();
+        int randomParDelta = random.nextInt(3) + 3;
+
+        roundName = "Buckeye20150929" +  Integer.toString(random.nextInt(14) + 10);
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.execSQL(
+                "CREATE TABLE " + roundName +
+                        " (id INTEGER PRIMARY KEY, courseName TEXT, golferName TEXT, holeNumber TEXT, par TEXT, handicap TEXT, score TEXT, putts TEXT, greensHit TEXT, fairwayHit TEXT);"
+        );
+
+        for (int i = 1; i < 10;i++){
+            int randomScoreDelta = random.nextInt(5) + 1;
+            int randomHitDelta = random.nextInt(3) + 1;
+
+            String course = "Buckeye";
+            String hole = Integer.toString(i);
+            String par = Integer.toString(randomParDelta);
+            String score = "";
+            String greens = "";
+            String fairway = "";
+
+            if (randomScoreDelta == 1){
+                score = par;
+            }else if (randomScoreDelta == 2){
+                score = Integer.toString(Integer.parseInt(par) + 1);
+            }else if (randomScoreDelta == 3){
+                score = Integer.toString(Integer.parseInt(par) + 2);
+            }else if (randomScoreDelta == 4){
+                score = Integer.toString(Integer.parseInt(par) - 1);
+            }else if (randomScoreDelta == 5){
+                score = Integer.toString(Integer.parseInt(par) - 2);
+            }
+
+            if (randomHitDelta == 1){
+                fairway = "Left";
+                greens = "Right";
+            }else if (randomHitDelta == 2){
+                fairway = "Center";
+                greens = "Center";
+            }else if (randomHitDelta == 3){
+                fairway = "Right";
+                greens = "Left";
+            }
+
+            insertHole(course, golfer, hole, par, "0", score, "0", greens, fairway);
+        }
+    }
+*/
